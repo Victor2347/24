@@ -1,0 +1,5 @@
+{
+  "name": "Customer Data Manager & Excel Comparator",
+  "description": "Upload, search, and compare customer data from Excel files. Features flexible column mapping and comparison statistics.",
+  "requestFramePermissions": []
+}
