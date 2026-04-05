@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidCustomer(data) {
+      return data.name is string && data.name.size() < 200 &&
+             data.customerId is string && data.customerId.size() < 100 &&
+             data.taxId is string && data.taxId.size() < 50 &&
+             data.address is string && data.address.size() < 500 &&
+             data.createdBy == request.auth.uid &&
+             (data.createdAt is timestamp || data.createdAt == request.time);
+    }
+
+    function isValidComparisonLog(data) {
+      return data.customerId is string && data.customerId.size() >= 0 &&
+             data.matchedBy == request.auth.uid &&
+             (data.matchedAt is timestamp || data.matchedAt == request.time);
+    }
+
+    match /customers/{customerId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidCustomer(request.resource.data);
+      allow update: if isAuthenticated() && isValidCustomer(request.resource.data) && resource.data.createdBy == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+    }
+
+    match /comparisonLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidComparisonLog(request.resource.data);
+    }
+  }
+}
